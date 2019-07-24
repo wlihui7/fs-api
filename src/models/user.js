@@ -2,11 +2,12 @@ const mongo = require("../databases/db");
 const ObjectId = require('mongodb').ObjectId;
 
 class User {    
-    constructor(name, role, email, password) {
+    constructor(name, role, email, password, imageURL) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.role = role;
+        this.imageURL = imageURL;
     }
 
 static createUser(user, result) {

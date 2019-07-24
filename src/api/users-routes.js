@@ -27,7 +27,7 @@ router.post("/", (req, res) => {
         return res.status(400).json({ msg: "Missing information!"});
     }
 
-    var nUser = new User(user.name, user.role, user.email, user.password);
+    var nUser = new User(user.name, user.role, user.email, user.password, user.imageURL);
     User.createUser(nUser, (err, result) => { 
         if (err) {
             if (err.code === 'ER_DUP_ENTRY') {
@@ -39,7 +39,8 @@ router.post("/", (req, res) => {
                 id: result.insertId,
                 name: nUser.name,
                 email: nUser.email,
-                password: nUser.password
+                password: nUser.password,
+                imageURL: nUser.imageURL
             };
             return res.status(200).json(responseUser);
         }
@@ -52,7 +53,7 @@ router.post("/update", (req, res) => {
         error = true;
         return res.status(400).json({msg: "Missing information!"});
     }
-    var nUser = new User(user.name, user.role, user.email, user.password);
+    var nUser = new User(user.name, user.role, user.email, user.password, user.imageURL);
 
     User.updateUser(user._id, nUser, (err, result) => { 
         if (err) {
