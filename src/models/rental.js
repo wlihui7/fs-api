@@ -1,4 +1,5 @@
-const mysql = require("../databases/db");
+const mongo = require("../databases/db");
+const ObjectId = require('mongodb').ObjectId;
 
 class Rental {
     constructor(name, location, price, providerID, consumerID, imageURL) {
@@ -10,88 +11,105 @@ class Rental {
         this.imageURL = imageURL;
         // this.date_created = new Date();
     }
+    static createRental(rental, result) {
+        console.log("passed json", rental);
+        mongo.connect(err => {
+            if (err) {
+                console.log("error in connecting to mongo", err);
+                result(err, null);
+            }
+          const collection = mongo.db("Bnb").collection("Rental");
+          collection.insertOne(rental, function(err, res) {
+            if (err) {
+                console.log("error in inserting rental");
+                result(err, null);
+            } else {
+                console.log("! new Rental", res);
+                result(null, res.ops);
+            }
+        });
+        //   mongo.close();
+        });
+    
+    }
+    
+    static getRentalByID(id, result) {
+        mongo.connect(err => {
+            if (err) {
+                console.log("error in connecting to mongo", err);
+                result(err, null);
+            }
+          const collection = mongo.db("Bnb").collection("Rental");
+          collection.findOne(ObjectId(id), function(err, res) {
+            if (err) {
+                console.log("error in getting Rental by id from mongo: ", err);
+                result(err, null);
+            } else {
+                console.log("Res from mongo: ", res);
+                result(null, res);
+            }
+          });
+        });
+    }
 
-createRental(result) {
-mysql.query("INSERT INTO rental set ?", this, function(err, results) {
-        if (err) {
-            console.log("error: ", err);
-            result(err, null);
-        } else {
-            console.log("Rentals: ", results);
-            result(null, results);
-        }
-    });
-}
-
-static getAllRentals(result) {
-    mysql.query("SELECT * FROM rental", function(err, res) {
-        if (err) {
-            console.log("error: ", err);
-            result(err, null);
-        } else {
-            console.log("Rentals: ", res);
-            result(null, res);
-        }
-    });
-}
-
-static getRentalByID(id, result) {
-    mysql.query("Select * from rental where id = ? ", id, function(err, res) {
-        if (err) {
-            console.log("error: ", err);
-            result(err, null);
-        } else {
-            console.log("Rental: ", res[0]);
-            result(null, res[0]);
-        }
-    });
-}
-
-updateRental(id, uRental, result) {
-    mysql.query("UPDATE rental SET ? WHERE id = ?", [uRental, id], function(err, res) {
-        if (err) {
-            console.log("error: ", err);
-            result(err, null);
-        } else {
-            console.log("Updated Rental: ", res);
-            result(null, res);
-        }
-    });
-}
-
-deleteRental(id, result) {
-    mysql.query("DELETE FROM rental WHERE id = ?", id, function(err, res) {
-        if (err) {
-            console.log("error: ", err);
-            result(err, null);
-        } else {
-            console.log("Deleted Rental: ", res);
-            result(null, res);
-        }
-    });
-
-}
-
+    static getAllRentals(result) {
+        mongo.connect(err => {
+            if (err) {
+                console.log("error in connecting to mongo", err);
+                result(err, null);
+            }
+          const collection = mongo.db("Bnb").collection("Rental");
+          collection.find().toArray(function(err, res) {
+            if (err) {
+                console.log("error in getting Rentals from mongo: ", err);
+                result(err, null);
+            } else {
+                console.log(" -- Res from mongo: -- ", res);
+                result(null, res);
+            }
+          });
+        });
+    }
+    
+    static updateRental(id, uRental, result) {
+        console.log('passed in id', id);
+        mongo.connect(err => {
+            if (err) {
+                console.log("error in connecting to mongo", err);
+                result(err, null);
+            }
+          const collection = mongo.db("Bnb").collection("Rental");
+          collection.findOneAndReplace({"_id": ObjectId(id)}, uRental, function(err, res) {
+            if (err) {
+                console.log("error in replacing Rental in mongo: ", err);
+                result(err, null);
+            } else {
+                console.log("Res from mongo: ", res);
+                result(null, res);
+            }
+          });
+        });
+    }
+    
+    static deleteRental(id, result) {
+        mongo.connect(err => {
+            if (err) {
+                console.log("error in connecting to mongo", err);
+                result(err, null);
+            }
+          const collection = mongo.db("Bnb").collection("Rental");
+          collection.deleteOne({"_id": ObjectId(id)}, function(err, res) {
+            if (err) {
+                console.log("error in replacing Rental in mongo: ", err);
+                result(err, null);
+            } else {
+                console.log("Res from mongo: ", res);
+                result(null, res);
+            }
+          });
+        });
+    }    
 };
 
 module.exports = Rental;
-
-// var User = function(user) {
-//     this.name = user.name;
-//     this.surname = user.surname;
-//     this.cellPhone = user.cellPhone;
-//     this.email = user.email;
-//     this.password = user.password;
-//     this.role = user.role;
-//     this.date_created = new Date();
-//   };
-  
-//   module.exports = User;
-
-//   User.createUser = function(newUser, result) {
-//       mysql.query("INSERT INTO user", function(err, results, fields) {
-//         console.log("error: ", err);
-//         console.log("results: ", results);
-//     });
-//   };
 

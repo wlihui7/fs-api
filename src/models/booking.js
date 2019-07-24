@@ -1,4 +1,6 @@
-const mysql = require("../databases/db");
+// const mysql = require("../databases/db");
+const mongo = require("../databases/db");
+const ObjectId = require('mongodb').ObjectId;
 
 class Booking {
     constructor(propID, userID, dateFrom, dateTo) {
@@ -9,77 +11,149 @@ class Booking {
         // this.date_created = new Date();
     }
 
-createBooking(result) {
-mysql.query("INSERT INTO booking set ?", this, function(err, results) {
+static createBooking(booking, result) {
+    console.log("passed json", booking);
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.insertOne(booking, function(err, res) {
+        if (err) {
+            console.log("error in inserting booking");
             result(err, null);
         } else {
-            console.log("Bookings: ", results);
-            result(null, results);
+            console.log("! new booking", res);
+            result(null, res.ops);
         }
     });
+    //   mongo.close();
+    });
+
 }
 
-getAllBookings(result) {
-    mysql.query("SELECT * FROM booking", function(err, res) {
+static getBookingByID(id, result) {
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.findOne(ObjectId(id), function(err, res) {
+        if (err) {
+            console.log("error in getting Booking by id from mongo: ", err);
             result(err, null);
         } else {
-            console.log("bookings: ", res);
+            console.log("Res from mongo: ", res);
             result(null, res);
         }
+      });
     });
 }
 
-getBookingByID(id, result) {
-    mysql.query("Select * from booking where id = ? ", id, function(err, res) {
+
+static updateBooking(id, uBooking, result) {
+    console.log('passed in id', id);
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
             result(err, null);
-        } else {
-            console.log("Booking: ", res[0]);
-            result(null, res[0]);
         }
-    });
-}
-
-updateBooking(id, uBooking, result) {
-    mysql.query("UPDATE booking SET ? WHERE id = ?", [uBooking, id], function(err, res) {
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.findOneAndReplace({"_id": ObjectId(id)}, uBooking, function(err, res) {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in replacing Booking in mongo: ", err);
             result(err, null);
         } else {
-            console.log("Updated Booking: ", res);
+            console.log("Res from mongo: ", res);
             result(null, res);
         }
+      });
     });
 }
 
 static deleteBooking(id, result) {
-    mysql.query("DELETE FROM booking WHERE id = ?", id, function(err, res) {
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.deleteOne({"_id": ObjectId(id)}, function(err, res) {
+        if (err) {
+            console.log("error in replacing Booking in mongo: ", err);
             result(err, null);
         } else {
-            console.log("Deleted Booking: ", res);
+            console.log("Res from mongo: ", res);
             result(null, res);
         }
+      });
     });
 }
 
-static getBookingByUser(consumerId, rentalId, result) {
-    consumerId = parseInt(consumerId);
-    rentalId = parseInt(rentalId);
-    mysql.query("SELECT * FROM booking WHERE rentalID = ? AND userID = ?", [rentalId, consumerId], function(err, res) {
+static getBookingByUser(userId, rentalId, result) {
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.findOne(
+            {
+              $and: [
+                {"userID": userId}, 
+                {"rentalID": rentalId}
+                    ]
+            }, 
+          function(err, res) {
+        if (err) {
+            console.log("error in getting user by email from mongo: ", err);
             result(err, null);
         } else {
-            console.log("Booking: ", res[0]);
-            result(null, res[0]);
+            console.log("Res from mongo: ", res);
+            result(null, res);
         }
+      });
+    }); 
+}
+
+static getAllBookingsByUser(userId, result) {
+    console.log('-- passed user id --', userId);
+    mongo.connect(err => {
+        if (err) {
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.find({"userID": userId}).toArray(function(err, res) {
+        if (err) {
+            console.log("error in getting bookings from mongo: ", err);
+            result(err, null);
+        } else {
+            console.log(" -- Res from mongo: -- ", res);
+            result(null, res);
+        }
+      });
+    });
+}
+
+static getAllBookingsByRental(rentalId, result) {
+    mongo.connect(err => {
+        if (err) {
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("Booking");
+      collection.find({"rentalID": rentalId}).toArray(function(err, res) {
+        if (err) {
+            console.log("error in getting bookings from mongo: ", err);
+            result(err, null);
+        } else {
+            console.log(" -- Res from mongo: -- ", res);
+            result(null, res);
+        }
+      });
     });
 }
 
@@ -87,22 +161,4 @@ static getBookingByUser(consumerId, rentalId, result) {
 
 module.exports = Booking;
 
-// var User = function(user) {
-//     this.name = user.name;
-//     this.surname = user.surname;
-//     this.cellPhone = user.cellPhone;
-//     this.email = user.email;
-//     this.password = user.password;
-//     this.role = user.role;
-//     this.date_created = new Date();
-//   };
-  
-//   module.exports = User;
-
-//   User.createUser = function(newUser, result) {
-//       mysql.query("INSERT INTO user", function(err, results, fields) {
-//         console.log("error: ", err);
-//         console.log("results: ", results);
-//     });
-//   };
 

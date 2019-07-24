@@ -1,107 +1,115 @@
-const mysql = require("../databases/db");
+const mongo = require("../databases/db");
+const ObjectId = require('mongodb').ObjectId;
 
-class User {
+class User {    
     constructor(name, role, email, password) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.role = role;
-        // this.date_created = new Date();
     }
 
-createUser(result) {
-    mysql.query("INSERT INTO user set ?", this, function(err, results) {
+static createUser(user, result) {
+    console.log("passed json", user);
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
             result(err, null);
-        } else {
-            console.log("User: ", results);
-            result(null, results);
         }
-    });
-}
-
-getAllUsers(result) {
-    mysql.query("SELECT * FROM user", this, function(err, res) {
+      const collection = mongo.db("Bnb").collection("User");
+      collection.insertOne(user, function(err, res) {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in inserting user");
             result(err, null);
         } else {
-            console.log("Users: ", res);
+            console.log("! new User", res);
             result(null, res);
         }
     });
+    //   mongo.close();
+    });
+
 }
 
 static getUserByID(id, result) {
-    mysql.query("Select * from user where id = ? ", id, function(err, res) {
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("User");
+      collection.findOne(ObjectId(id), function(err, res) {
+        if (err) {
+            console.log("error in getting user by id from mongo: ", err);
             result(err, null);
         } else {
-            console.log("User: ", res[0]);
-            result(null, res[0]);
+            console.log("Res from mongo: ", res);
+            result(null, res);
         }
+      });
     });
 }
 
 static getUserByEmail(email, result) {
-    mysql.query("Select * from user where email = ? ", email, function(err, res) {
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("User");
+      collection.findOne({"email": email}, function(err, res) {
+        if (err) {
+            console.log("error in getting user by email from mongo: ", err);
             result(err, null);
         } else {
-            console.log("user's User (does not throw error in getting user): ", res[0]);
-            result(null, res[0]);
+            console.log("Res from mongo: ", res);
+            result(null, res);
         }
+      });
     });
 }
 
-updateUser(id, uUser, result) {
-    mysql.query("UPDATE user SET ? WHERE id = ?", [uUser, id], function(err, res) {
+static updateUser(id, uUser, result) {
+    console.log('passed in id', id);
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("User");
+      collection.findOneAndReplace({"_id": ObjectId(id)}, uUser, function(err, res) {
+        if (err) {
+            console.log("error in replacing user in mongo: ", err);
             result(err, null);
         } else {
-            console.log("Updated User: ", res);
+            console.log("Res from mongo: ", res);
             result(null, res);
         }
+      });
     });
 }
 
-deleteUser(id, result) {
-    mysql.query("DELETE FROM user WHERE id = ?", id, function(err, res) {
+static deleteUser(id, result) {
+    mongo.connect(err => {
         if (err) {
-            console.log("error: ", err);
+            console.log("error in connecting to mongo", err);
+            result(err, null);
+        }
+      const collection = mongo.db("Bnb").collection("User");
+      collection.deleteOne({"_id": ObjectId(id)}, function(err, res) {
+        if (err) {
+            console.log("error in replacing user in mongo: ", err);
             result(err, null);
         } else {
-            console.log("Deleted User: ", res);
+            console.log("Res from mongo: ", res);
             result(null, res);
         }
+      });
     });
-
 }
 
 };
 
 module.exports = User;
 
-// var User = function(user) {
-//     this.name = user.name;
-//     this.surname = user.surname;
-//     this.cellPhone = user.cellPhone;
-//     this.email = user.email;
-//     this.password = user.password;
-//     this.role = user.role;
-//     this.date_created = new Date();
-//   };
-  
-//   module.exports = User;
-
-//   User.createUser = function(newUser, result) {
-//       mysql.query("INSERT INTO user", function(err, results, fields) {
-//         console.log("error: ", err);
-//         console.log("results: ", results);
-//     });
-//   };
 
